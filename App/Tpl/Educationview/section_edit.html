@@ -1,0 +1,75 @@
+<script src="/Public/style/js/plugins/validate/jquery.validate.min.js"></script>
+
+<style type="text/css">
+    .templete_Add .form-group {
+        margin: 10px 0;
+    }
+    .radio-info{
+        margin: 0 20px;
+    }
+    .textarea textarea{
+        width: 100%;
+    }
+    .select2-selection{
+        background-color: #FFFFFF !important;
+        background-image: none !important;
+        border: 1px solid #d8e3ef !important;
+        border-radius: 1px !important;
+        height: 32px;
+        line-height: 32px;
+    }
+    .select2-selection__rendered{
+        padding-left: 17px !important;
+    }
+</style>
+
+
+
+<form action="" id="section_add_form">
+    <div class="col-md-10 add_body_form" style="margin:20px 0 0 21px;">
+        <!-- 文本 -->
+        <div class="form-group clearfix">
+            <label class="col-md-4 control-label"><span style="color:#FF0011;">*</span>课时名称</label>
+            <div class="col-md-8">
+                <input class="form-control" autocomplete="off" required type="text" name="name" aria-required="true"
+                       value="{$info.name}" placeholder="请输入课时名称" />
+            </div>
+        </div>
+        <div class="form-group clearfix">
+            <label class="col-md-4 control-label">课时标题</label>
+            <div class="col-md-8">
+                <input class="form-control" autocomplete="off" type="text" name="title"
+                       value="{$info.title}" placeholder="请输入课时标题" />
+            </div>
+        </div>
+        <div class="form-group clearfix">
+            <label class="col-md-4 control-label">课时编号(第几节)</label>
+            <div class="col-md-2">
+                <input class="form-control" autocomplete="off" type="number" name="node"
+                       value="{$info.node}" placeholder="第几节" />
+            </div>
+        </div>
+        <div class="form-group clearfix">
+            <label class="col-md-4 control-label"><span style="color:#FF0011;">*</span>课时时长</label>
+            <div class="col-md-8">
+                <input class="form-control" autocomplete="off" required type="number" name="duration" aria-required="true"
+                       value="{$info.duration}" placeholder="请输入课时时长(分钟)" />
+            </div>
+        </div>
+
+        <!-- 文本域 -->
+        <div class="form-group clearfix">
+            <label class="col-md-4 control-label">课时详情</label>
+            <div class="col-md-8">
+                <div class="textarea">
+                    <textarea name="detail" id="" cols="30" rows="10">{$info.detail}</textarea>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" name="id" value="{$info.id}">
+    </div>
+</form>
+
+
+
+

@@ -1,0 +1,167 @@
+<include file="Public:header" />
+<script src="__PUBLIC__/js/PCASClass.js" type="text/javascript"></script>
+<script src="__PUBLIC__/js/laydate/laydate.js" type="text/javascript"></script>
+
+<style type="text/css">
+    .add_title{
+        padding-bottom:10px;
+        height: 60px;
+        margin-bottom:15px;
+    }
+    .add_title>span{
+        border-bottom: 2px solid #1ab394;
+        font-size: 24px;
+    }
+    .add_body >div >.full-height-scroll{
+        border-right:1px dotted #ccc
+    }
+    .add_body_title{
+        margin:20px auto 20px auto;
+        padding-left: 25px;
+    }
+    .add_body_form{
+        padding-left: 38px;
+    }
+    .add_body_form>form>.form-group{
+        margin-bottom: 25px;
+    }
+    body{overflow-y:hidden;}
+    .form-control{
+        float:left;
+    }
+    .checkbox{float:left;}
+</style>
+<script>
+    $(function () {
+        $(".add_body").height(window.innerHeight - $("#add_body").offset().top - $("#tfoot_div").height() - 40);
+        $(window).resize(function () {
+            $(".add_body").height(window.innerHeight - $("#add_body").offset().top - $("#tfoot_div").height() - 40);
+        })
+    })
+</script>
+<div class="wrapper wrapper-content animated fadeIn col-md-8">
+    <include file="Public:alert" />
+    <form class="form-horizontal" id="form"  role="form" action="{:U('CourseCoupon/add')}" method="post">
+        <div class="ibox-content add_body" id="add_body" style="">
+            <div class="full-height-scroll">
+                <div class="row">
+                    <div class="col-md-12 add_body_title" style="margin:20px 0 0 0px;">
+                        <div class="all-inline">
+                            <span class="sq-tag"></span>
+                            <div class="text-tag">
+                                <span>基础信息</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-11 add_body_form">
+                        <!-- 校区选择 -->
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">名称：</label>
+                            <div class="col-md-8">
+                                <input class="form-control required" type="text" name="title"   placeholder="请输入优惠券名称">
+                            </div>
+                            <div class="col-md-2"><span style="color: red;line-height: 32px;margin-left: 10px;">*</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">优惠码：</label>
+                            <div class="col-md-8">
+                                <input class="form-control required"  name="code"  type="text"  placeholder="如不填写，则由系统自动生成">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">优惠类型：</label>
+                            <div class="col-md-8">
+                                <foreach name="category" item="vo" >
+                                    &nbsp;&nbsp;&nbsp; &nbsp;
+                                    <div class="radio radio-info radio-inline">
+                                        <input type="radio" name="type"  type="radio"  id="{$key}" value="{$key}">
+                                        <label for="{$key}">{$vo}</label>
+                                    </div>
+                                </foreach>
+                            </div>
+
+                            <div class="col-md-2"><span style="color: red;line-height: 32px;margin-left: 10px;">*</span></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">折扣：</label>
+                            <div class="col-md-8">
+                                <input class="form-control required"  name="value"  type="text"  placeholder="请根据类型填写折扣值">
+                            </div>
+                            <div class="col-md-2"><span style="color: red;line-height: 32px;margin-left: 10px;">*</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">总量：</label>
+                            <div class="col-md-8">
+                                <input class="form-control required"  name="total"  type="text"  placeholder="折扣券的总数">
+                            </div>
+                            <div class="col-md-2"><span style="color: red;line-height: 32px;margin-left: 10px;">*</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">最低金额：</label>
+                            <div class="col-md-8">
+                                <input class="form-control required"  name="min_amount"  type="text"  placeholder="折扣券的使用的最低金额">
+                            </div>
+                            <div class="col-md-2"><span style="color: red;line-height: 32px;margin-left: 10px;">*</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">开始时间：</label>
+                            <div class="col-md-8">
+                                <input class="form-control required" id="not_before"  name="not_before"  type="text"  placeholder="折扣券的开始时间">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">结束时间：</label>
+                            <div class="col-md-8">
+                                <input class="form-control required"  id="not_after" name="not_after"  type="text"  placeholder="折扣券的结束时间">
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">是否启用：</label>
+                            <div class="col-md-8">
+                                    &nbsp;&nbsp;&nbsp; &nbsp;
+                                    <div class="radio radio-info radio-inline">
+                                        <input type="radio" name="enabled"  type="radio"  id="enable" value="1">
+                                        <label for="enable">是</label>
+                                    </div>
+                                &nbsp;&nbsp;&nbsp; &nbsp;
+                                <div class="radio radio-info radio-inline">
+                                    <input type="radio" name="enabled"  type="radio" checked  id="unable" value="0">
+                                    <label for="unable">否</label>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-2"><span style="color: red;line-height: 32px;margin-left: 10px;">*</span></div>
+                        </div>
+
+                        <div class="col-md-1 pull-right">
+                            <!-- <div style="height: 100%; border-right: 1px dashed gray;">&nbsp;sadf</div> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tfoot_div" class="clearfix">
+            <div class="clearfix" id="tfoot_page">
+                <div class="ibox-content" style="border-top: none;">
+                    <div class="col-sm-offset-2" style="text-align:center;margin-left:0px;"><button type="submit" id="save_submit" class="btn btn-primary">创建</button></div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    laydate.render({
+        elem: '#not_before', //指定元素         value:"开始日期",
+        min:0
+    });
+    laydate.render({
+        elem: '#not_after', //指定元素
+//                                                                        value:"",
+//                                                                       min:$('#reservation').val(),
+        min:0
+    });
+</script>
+<include file="Public:footer" />
