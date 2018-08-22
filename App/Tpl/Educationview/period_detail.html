@@ -1,5 +1,3 @@
-
-
 <style>
     .group_item {
         margin: 5px 0;
@@ -23,6 +21,12 @@
     }
     td a{
         color: #5C8FFC !important;
+    }
+    .modal-backdrop{
+        display: none !important;
+    }
+    .modal{
+        top: 120px;
     }
 </style>
  <script src="__PUBLIC__/style/js/plugins/nice-scroll/jquery.nicescroll.min.js" type="text/javascript"></script>
@@ -177,8 +181,10 @@
                                             </template>
                                             <template v-else>
                                                 <div class="file-container" style="display:inline-block;position:relative;overflow: hidden;vertical-align:middle">
-                                                    <button class="btn btn-success fileinput-button" type="button">视频上传</button>
-                                                    <input type="file"  onchange="loadFile(this,this.files[0],1)" style="position:absolute;top:0;left:0;font-size:34px; opacity:0">
+                                                    <button class="btn btn-success fileinput-button" type="button" @click="chakanKejian(s.schedule_id)" >查看课件</button>
+                                                    <button class="btn btn-success fileinput-button" type="button" @click="guanlianKejian(s.schedule_id)">关联课件</button>
+                                                    <!--<button class="btn btn-success fileinput-button" type="button">视频上传</button>-->
+                                                    <!--<input type="file"  onchange="loadFile(this,this.files[0],1)" style="position:absolute;top:0;left:0;font-size:34px; opacity:0">-->
                                                 </div>
                                             </template>
                                             <div class="file-container" style="display:inline-block;position:relative;overflow: hidden;vertical-align:middle">
@@ -254,6 +260,7 @@
         </div>
     </div>
 </div>
+
 <script>
 
     var period_Detail = new Vue({
@@ -338,6 +345,14 @@
                     layer.close(index);
                 });
             },
+            guanlianKejian:function(id){
+               window.location.href='/index.php?m=course_document&a=index&type=guanlian&schedule_id='+id;
+            },
+            chakanKejian:function(id){
+                window.location.href='/index.php?m=course_document&a=index&type=chakan&schedule_id='+id;
+            },
+
+
             addStudent:function(){
                 var _this       =   this,
                     form_data   =   $('#period_student_add_form').serialize();
@@ -437,4 +452,13 @@
     function dd(data) {
         console.log(data)
     }
+    $(document).ready(function(){
+        $(document).on('click','#guanlian_kejian',function () {
+           alert($(this).data('id'));
+        })
+    });
+
+
+
+
 </script>

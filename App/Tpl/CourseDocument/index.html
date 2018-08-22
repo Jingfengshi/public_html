@@ -74,7 +74,14 @@
                     <ul class="breadcrum pull-left">
                         <li>已选中&nbsp;<span id="icheck_num"></span>&nbsp;项</li>
                         <?php if ( checkPerByAction('abroadcoursecategory','delete') ): ?>
-                        <li><a id="delete" href="javascript:void(0)"><i class="fa fa-times"></i>&nbsp;删除</a></li>
+                        <if condition="$type eq 'guanlian'">
+                            <li><a  onclick="guanlianById()" id="guanlian_check" href="javascript:void(0)"><i class="fa fa-plus"></i>&nbsp;关联</a></li>
+                        <elseif condition="$type eq 'chakan'" />
+                            <li><a  onclick="DelguanlianById()"  href="javascript:void(0)"><i class="fa fa-minus"></i>&nbsp;删除关联课件</a></li>
+                        <else/>
+                            <li><a id="delete" href="javascript:void(0)"><i class="fa fa-times"></i>&nbsp;删除</a></li>
+                        </if>
+
                         <?php endif; ?>
                         <li class="last_li"><big><a class="fa fa-times pull-right" id="back-show"></a></big></li>
                     </ul>
@@ -136,6 +143,9 @@
 </div>
 <script>
     $(function(){
+        var type='{$type}'
+        var schedule_id='{$schedule_id}'
+
         table();
         $('#delete').click(function(){
             var id_array = [];
@@ -208,9 +218,15 @@
 
         var icheck_num = 0;
         var d_width = $(".table_vue").width() - 16;
+        var type='{$type}'
+        var schedule_id='{$schedule_id}'
 
+        var str='';
+        if(type && schedule_id){
+            str+='&type='+type+'&schedule_id='+schedule_id;
+        }
         $("#table_list_2").jqGrid({
-            url:"{:U('CourseDocument/index')}",
+            url:"{:U('CourseDocument/index')}"+str,
             datatype: "JSON",
             mtype: "post",
             width: "100%",
@@ -392,6 +408,87 @@
         $(window).bind("resize", function () {
             setWidthHeight();
         })
+    }
+
+    function guanlian(cellvalue, options, cell){
+        var type='{$type}'
+        var schedule_id='{$schedule_id}'
+
+        if(schedule_id && type=='guanlian'){
+            return '<a class="btn btn-primary btn-sm" href="" onclick="guanlianById('+cell.id+')">关联</a>';
+        }else{
+            return '';
+        }
+    }
+    function guanlianById(id) {
+        var id_array = [];
+        if (!id){
+            for( i = 0; i < $(".cbox").length; i++){
+                if ($(".cbox").eq(i).prop('checked')) {
+                    id_array.push($(".cbox").eq(i).val())
+                }
+            }
+            console.log("关联数组",id_array);
+        }else{
+            id_array.push(id);
+            console.log("单个关联",id_array);
+        }
+
+        $.ajax({
+            type: "post",
+            url: "{:U('CourseDocument/relatedSchedule')}",
+            data: {
+                id:id_array,
+                schedule_id:'{$schedule_id}'
+            },
+            dataType: "json",
+            success : function(result){
+                console.log(result);
+                if(result.status != 1){
+                    alert('跑神儿了,没有写入成功!');
+                }else{
+                    alert('关联成功');
+                    window.location.reload(true);
+                }
+            }
+        });
+
+
+    }
+
+    function DelguanlianById(id){
+        var id_array = [];
+        if (!id){
+            for( i = 0; i < $(".cbox").length; i++){
+                if ($(".cbox").eq(i).prop('checked')) {
+                    id_array.push($(".cbox").eq(i).val())
+                }
+            }
+            console.log("关联数组",id_array);
+        }else{
+            id_array.push(id);
+            console.log("单个关联",id_array);
+        }
+
+        $.ajax({
+            type: "post",
+            url: "{:U('CourseDocument/DelRelatedSchedule')}",
+            data: {
+                id:id_array,
+                schedule_id:'{$schedule_id}'
+            },
+            dataType: "json",
+            success : function(result){
+                console.log(result);
+                if(result.status != 1){
+                    alert('跑神儿了,没有写入成功!');
+                }else{
+                    alert('删除关联成功');
+                    window.location.reload(true);
+                }
+            }
+        });
+
     }
     //设置table高度
     function setWidthHeight(){
