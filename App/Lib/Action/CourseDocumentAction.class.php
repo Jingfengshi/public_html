@@ -11,14 +11,69 @@ class CourseDocumentAction extends Action{
         $this->db=D('CourseDocument');
     }
     public function index(){
+        if(IS_POST){
 
+        }
         if ($this->isAjax()) {
-            $wheredata = $_REQUEST;
-            $page = $wheredata['page'] ? $wheredata['page'] : 1;// 请求页码
-            $limit = $wheredata['row'] ? $wheredata['row'] : 10;// 每页显示条数
-            $condition=array();
-            $data=$this->db->getDataBy('all',$condition);
-            $count = count($data);
+                if(isset($_REQUEST['schedule_id']) && is_numeric($_REQUEST['schedule_id'])){
+                    $schedule_id=$_GET['schedule_id'];
+                    if(isset($_REQUEST['type']) && $_REQUEST['type']=='guanlian'){
+                        $type='guanlian';
+                    }else{
+                        $type='chakan';
+                    }
+                    if($type=='guanlian'){
+                    //如果是要关联,查询关联表中所有
+                    $model=$schedule_document=D('ScheduleDocument');
+                    $schedule_document=$model->getDataBy('all',array('schedule_id'=>$schedule_id));
+                    if($schedule_document){
+                        //关联的有课程
+                        $document_ids=array();
+                        foreach ($schedule_document as $val){
+                            $document_ids[]=$val['document_id'];
+                        }
+
+                        $wheredata = $_REQUEST;
+                        $page = $wheredata['page'] ? $wheredata['page'] : 1;// 请求页码
+                        $limit = $wheredata['row'] ? $wheredata['row'] : 10;// 每页显示条数
+                        $condition=array();
+                        $condition['id']=array('not in',$document_ids);
+                        $data=$this->db->getDataBy('all',$condition);
+                    }else{
+                        $wheredata = $_REQUEST;
+                        $page = $wheredata['page'] ? $wheredata['page'] : 1;// 请求页码
+                        $limit = $wheredata['row'] ? $wheredata['row'] : 10;// 每页显示条数
+                        $condition=array();
+                        $data=$this->db->getDataBy('all',$condition);
+                        $count = count($data);
+                    }
+                }elseif($type='chakan'){
+                    $model=$schedule_document=D('ScheduleDocument');
+                    $schedule_document=$model->getDataBy('all',array('schedule_id'=>$schedule_id));
+                        if($schedule_document){
+                            //关联的有课程
+                            $document_ids=array();
+                            foreach ($schedule_document as $val){
+                                $document_ids[]=$val['document_id'];
+                            }
+                            $wheredata = $_REQUEST;
+                            $page = $wheredata['page'] ? $wheredata['page'] : 1;// 请求页码
+                            $limit = $wheredata['row'] ? $wheredata['row'] : 10;// 每页显示条数
+                            $condition=array();
+                            $condition['id']=array('in',$document_ids);
+                            $data=$this->db->getDataBy('all',$condition);
+                        }
+                }
+
+
+            }else{
+                    $wheredata = $_REQUEST;
+                    $page = $wheredata['page'] ? $wheredata['page'] : 1;// 请求页码
+                    $limit = $wheredata['row'] ? $wheredata['row'] : 10;// 每页显示条数
+                    $condition=array();
+                    $data=$this->db->getDataBy('all',$condition);
+                    $count = count($data);
+            }
 
             $this->ajaxReturn([
                 'result' => true,
@@ -28,6 +83,21 @@ class CourseDocumentAction extends Action{
                 '_sql' => $this->db->getLastSql()
             ]);
         }
+
+        //页面请求
+        if(isset($_GET['schedule_id']) && is_numeric($_GET['schedule_id'])){
+            $schedule_id=$_GET['schedule_id'];
+            if(isset($_GET['type']) && $_GET['type']=='guanlian'){
+                $type='guanlian';
+            }else{
+                $type='chakan';
+            }
+
+            $this->assign('type',$type);
+            $this->assign('schedule_id',$schedule_id);
+
+        }
+
         $this->display();
     }
 
@@ -76,5 +146,77 @@ class CourseDocumentAction extends Action{
                 'info'=>$this->db->getError()
             ]);
         }
+    }
+
+
+    public function relatedSchedule()
+    {
+        $data=I('post.');
+        $insert=array();
+        foreach ($data['id'] as $v){
+            $insert[$v]=array(
+                'schedule_id'=>$data['schedule_id'],
+                'document_id'=>$v
+            );
+        }
+        $model=$schedule_document=D('ScheduleDocument');
+        $res=$model->where(array('schedule_id'=>$_REQUEST['schedule_id']))
+        ->select();
+        if($res){
+            foreach ($res as $key=>$val){
+                if($data[$val['document_id']]){
+                    unset($insert[$val['document_id']]);
+                }
+            }
+        }
+        $insert=array_values($insert);
+        $model->addAll($insert);
+        $this->ajaxReturn([
+            'status'=>1
+        ]);
+
+
+    }
+
+    public function DelRelatedSchedule()
+    {
+        $data=I('post.');
+        $delete=array();
+        foreach ($data['id'] as $v){
+            $delete[]=array(
+                'schedule_id'=>$data['schedule_id'],
+                'document_id'=>$v
+            );
+        }
+        $model=$schedule_document=D('ScheduleDocument');
+        foreach ($delete as $key=>$val){
+            $model->where('document_id='.$val['document_id'].' and schedule_id='.$val['schedule_id'])
+                ->delete();
+        }
+
+        $this->ajaxReturn([
+            'status'=>1
+        ]);
+
+
+    }
+
+
+    public function getRelatedScheduleList()
+    {
+        $schedule_id=$_GET['schedule_id'];
+        $type=$_REQUEST['type'];
+        $this->assign('type',$type);
+        $this->assign('schedule_id',$schedule_id);
+        $this->display('relatedScheduleList');
+    }
+
+    public function getChaKanRelatedScheduleList()
+    {
+        $schedule_id=$_GET['schedule_id'];
+        $type=$_REQUEST['type'];
+        $this->assign('type',$type);
+        $this->assign('schedule_id',$schedule_id);
+        $this->display('chaKanRelatedScheduleList');
     }
 }
