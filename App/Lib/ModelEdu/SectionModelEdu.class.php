@@ -7,7 +7,7 @@ class SectionModelEdu extends EducationModelEdu
 
     public function sectionByCourseId ($courseId)
     {
-        return $this->field('c_s.id,c_s.node,c_s.name,c_s.title,c_s.detail,c_s.duration,mx_u.full_name creator_name,c_s.creator_id,c_s.create_at')
+        return $this->field('c_s.id,c_s.video_path,c_s.node,c_s.name,c_s.title,c_s.detail,c_s.duration,mx_u.full_name creator_name,c_s.creator_id,c_s.create_at')
             ->join("c_s LEFT JOIN mxcrm.mx_user mx_u ON mx_u.user_id = c_s.creator_id")
             ->where(['c_s.course_id'=>['eq',$courseId]])
             ->order('c_s.node ASC')

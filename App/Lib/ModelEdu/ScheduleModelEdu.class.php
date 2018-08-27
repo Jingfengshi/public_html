@@ -88,6 +88,7 @@ class ScheduleModelEdu extends EducationModelEdu
 
     }
 
+
     public function schedule_signin ($where=null)
     {
         $_where                 =   [];

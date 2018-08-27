@@ -137,6 +137,7 @@ td a {
                                             <td style="">课时编号</td>
                                             <td style="">课时标题</td>
                                             <td style="">课时时长</td>
+                                            <td style="">课时视频</td>
                                             <td style="">创建人</td>
                                             <td style="">创建时间</td>
                                             <td style="">操作</td>
@@ -152,11 +153,17 @@ td a {
                                             <td style="">{{s.node}}</td>
                                             <td style="">{{s.title}}</td>
                                             <td style="">{{s.duration}}</td>
+                                            <!--<td style=""><a v-if="s.video_path != null " :href="s.video_path" target="_blank">试播</a> </td>-->
+                                            <td style=""><a v-if="s.video_path != null " :href="'http://'+s.video_path" target="_blank">试播</a> </td>
                                             <td style="">{{s.creator_name}}</td>
                                             <td style="">{{s.create_at}}</td>
-                                            <td style="text-align:center;padding:14px;color:#666">
-                                                <button class="btn btn-danger btn-sm" @click="section_del($event)">删除</button>
-                                                <button class="btn btn-info btn-sm" onclick="showSectionEdit(this)">修改</button>
+                                            <td style="text-align:center;padding:14px;color:#666;">
+                                                <div style=" position: relative;">
+                                                    <button class="btn btn-success fileinput-button" type="file" >视频上传</button>
+                                                    <input type="file"   :data-id="s.id" onchange="loadFile(this,this.files[0],3)" style="width: 84px;display: inline-block;opacity: 0;left: 50%;position: absolute;top: 0;margin-left: -98px;" class="btn btn-success fileinput-button" value="视频上传" >
+                                                    <button class="btn btn-danger btn-sm" @click="section_del($event)">删除</button>
+                                                    <button class="btn btn-info btn-sm" onclick="showSectionEdit(this)">修改</button>
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -293,406 +300,458 @@ td a {
 <include file="Public:footer" />
 <script>
 $(function() {
-    var templete_Detail = new Vue({
-        el: '.templete_Detail',
-        data: {
-            detail: {},
-            sections: {},
-            periods: {},
-            products: {},
-            count: {},
+
+})
+var templete_Detail = new Vue({
+    el: '.templete_Detail',
+    data: {
+        detail: {},
+        sections: {},
+        periods: {},
+        products: {},
+        count: {},
+    },
+    methods: {
+        getCourseDetail: function() {
+            var id = getQueryString('id');
+            dd(id)
+            if (!id) return;
+            var _this = this;
+            $.ajax({
+                url: "/index.php?m=education&a=course_detail",
+                data: { id: id },
+                dataType: "JSON",
+                type: "POST",
+                success: function(res) {
+                    if (res.result == true) {
+                        _this.detail = res.detail
+                        // var _first = res.detail.detail.substr(0,4);
+                        // var _last = res.detail.detail.substr(res.detail.detail.length-4,res.detail.detail.length);
+                        // if (_first == '&lt;' && _last == '&gt;') {
+                        //     _this.detail  = res.detail.detail.substr(4,res.detail.detail.length-4);
+                        // }
+                        // _this.$nextTick(function(){
+                        //     var oDiv = document.getElementById("temp_detail");
+                        //     oDiv.innerHTML = res.detail.detail;
+                        // })
+                        //
+                        function escapeStringHTML(str) {
+                            str = str.replace(/&lt;/g,'<');
+                            str = str.replace(/&gt;/g,'>');
+                            str = str.replace(/&amp;/g,'"');
+                            str = str.replace(/&quot;/g,'"');
+                            str = str.replace(/&#039;/g,"'");
+                            return str;
+                        }
+                        $("#temp_detail").html(escapeStringHTML(res.detail.detail))
+                        _this.sections = res.sections;
+                        _this.periods = res.periods;
+                        _this.products = res.products;
+                        _this.count = res.count;
+                    } else {
+                        alert(res.error);
+                    }
+                }
+            });
         },
-        methods: {
-            getCourseDetail: function() {
-                var id = getQueryString('id');
-                dd(id)
-                if (!id) return;
-                var _this = this;
+        section_del: function(btn) {
+            var parent = $(btn.target).parent().parent(),
+                section_id = parent.data('id'),
+                _this = this;
+            if (!section_id) return;
+
+            layer.confirm('确定删除课时吗?', { icon: 3, title: '提示' }, function(index) {
+                // 删除
                 $.ajax({
-                    url: "/index.php?m=education&a=course_detail",
-                    data: { id: id },
+                    url: "/index.php?m=education&a=section_del",
+                    data: { id: section_id },
                     dataType: "JSON",
                     type: "POST",
                     success: function(res) {
-                        if (res.result == true) {
-                            _this.detail = res.detail
-                            // var _first = res.detail.detail.substr(0,4);
-                            // var _last = res.detail.detail.substr(res.detail.detail.length-4,res.detail.detail.length);
-                            // if (_first == '&lt;' && _last == '&gt;') {
-                            //     _this.detail  = res.detail.detail.substr(4,res.detail.detail.length-4);
-                            // }
-                            // _this.$nextTick(function(){
-                            //     var oDiv = document.getElementById("temp_detail");
-                            //     oDiv.innerHTML = res.detail.detail;
-                            // })
-                            // 
-                            function escapeStringHTML(str) {
-                                str = str.replace(/&lt;/g,'<');
-                                str = str.replace(/&gt;/g,'>');
-                                str = str.replace(/&amp;/g,'"');
-                                str = str.replace(/&quot;/g,'"');
-                                str = str.replace(/&#039;/g,"'");
-                                return str;
-                            }
-                            $("#temp_detail").html(escapeStringHTML(res.detail.detail))
-                            _this.sections = res.sections;
-                            _this.periods = res.periods;
-                            _this.products = res.products;
-                            _this.count = res.count;
+                        dd(res);
+                        if (res.result) {
+                            _this.getCourseDetail();
+                            layer.msg('删除成功！');
                         } else {
                             alert(res.error);
                         }
                     }
                 });
-            },
-            section_del: function(btn) {
-                var parent = $(btn.target).parent().parent(),
-                    section_id = parent.data('id'),
-                    _this = this;
-                if (!section_id) return;
-
-                layer.confirm('确定删除课时吗?', { icon: 3, title: '提示' }, function(index) {
-                    // 删除
-                    $.ajax({
-                        url: "/index.php?m=education&a=section_del",
-                        data: { id: section_id },
-                        dataType: "JSON",
-                        type: "POST",
-                        success: function(res) {
-                            dd(res);
-                            if (res.result) {
-                                _this.getCourseDetail();
-                                layer.msg('删除成功！');
-                            } else {
-                                alert(res.error);
-                            }
-                        }
-                    });
-                    layer.close(index);
-                });
-            },
-            period_del: function(btn) {
-                var parent = $(btn.target).parent().parent(),
-                    period_id = parent.data('id'),
-                    _this = this;
-                if (!period_id) return;
-                layer.confirm('确定删除课期(班级)吗?', { icon: 3, title: '提示' }, function(index) {
-                    // 删除
-                    $.ajax({
-                        url: "/index.php?m=education&a=period_del",
-                        data: { id: period_id },
-                        dataType: "JSON",
-                        type: "POST",
-                        success: function(res) {
-                            dd(res);
-                            if (res.result) {
-                                _this.getCourseDetail();
-                                layer.msg('删除成功！');
-                            } else {
-                                layer.msg("ERROR " + res.error);
-                            }
-                        }
-                    });
-                    layer.close(index);
-                });
-            },
-            PC_del: function(btn) {
-                var parent = $(btn.target).parent().parent(),
-                    ral_id = parent.data('id'),
-                    _this = this;
-                if (!ral_id) return;
-                layer.confirm('确定删除产品关联吗?', { icon: 3, title: '提示' }, function(index) {
-                    // 删除
-                    $.ajax({
-                        url: "/index.php?m=education&a=courseproduct_del",
-                        data: { id: ral_id },
-                        dataType: "JSON",
-                        type: "POST",
-                        success: function(res) {
-                            dd(res);
-                            if (res.result) {
-                                _this.getCourseDetail();
-                                layer.msg('删除成功！');
-                            } else {
-                                layer.msg("ERROR " + res.error);
-                            }
-                        }
-                    });
-                    layer.close(index);
-                });
-            },
-
-
-            gotoProductDetail: function(product_id) {
-                if (!product_id) return;
-
-                window.open('/index.php?m=product&a=view&id=' + product_id);
-            }
+                layer.close(index);
+            });
         },
-        mounted: function() {
-            $("[type='tab1']").click();
-            // 获取详情
-            this.getCourseDetail();
-        }
-    });
-
-    // 添加课时弹框显示
-    $("#dialog-section-add").dialog({
-        autoOpen: false,
-        modal: true,
-        width: '55%',
-        maxHeight: 600,
-        position: ["center", 100],
-        buttons: {
-            '添加': function() {
-                // 操作
-                var course_id = templete_Detail.detail.id,
-                    form_data = $('#section_add_form').serializeArray(),
-                    data = {},
-                    _dialog = this;
-                form_data.forEach(function(v) {
-                    data[v.name] = v.value;
-                });
-                data['course_id'] = course_id;
+        period_del: function(btn) {
+            var parent = $(btn.target).parent().parent(),
+                period_id = parent.data('id'),
+                _this = this;
+            if (!period_id) return;
+            layer.confirm('确定删除课期(班级)吗?', { icon: 3, title: '提示' }, function(index) {
+                // 删除
                 $.ajax({
-                    url: "{:U('education/section_add')}",
-                    data: data,
+                    url: "/index.php?m=education&a=period_del",
+                    data: { id: period_id },
                     dataType: "JSON",
                     type: "POST",
                     success: function(res) {
+                        dd(res);
                         if (res.result) {
-                            // 刷新主页数据
-                            templete_Detail.getCourseDetail();
-                            //
-                            layer.msg('添加成功！');
-                            // 关闭弹框
-                            $(_dialog).dialog('close');
-
+                            _this.getCourseDetail();
+                            layer.msg('删除成功！');
                         } else {
-                            layer.msg('ERROR ' + res.error);
+                            layer.msg("ERROR " + res.error);
                         }
                     }
                 });
-                return;
-            },
-            '取消': function() {
-                $(this).dialog('close');
-            }
+                layer.close(index);
+            });
         },
-        close: function() {
-            $(this).html('');
-        }
-    });
-    // 修改课时弹框显示
-    $("#dialog-section-edit").dialog({
-        autoOpen: false,
-        modal: true,
-        width: '55%',
-        maxHeight: 600,
-        position: ["center", 100],
-        buttons: {
-            '修改': function() {
-                // 操作
-                var course_id = templete_Detail.detail.id,
-                    form_data = $('#section_add_form').serializeArray(),
-                    data = {},
-                    _dialog = this;
-                form_data.forEach(function(v) {
-                    data[v.name] = v.value;
-                });
+        PC_del: function(btn) {
+            var parent = $(btn.target).parent().parent(),
+                ral_id = parent.data('id'),
+                _this = this;
+            if (!ral_id) return;
+            layer.confirm('确定删除产品关联吗?', { icon: 3, title: '提示' }, function(index) {
+                // 删除
                 $.ajax({
-                    url: "{:U('education/section_edit')}",
-                    data: data,
+                    url: "/index.php?m=education&a=courseproduct_del",
+                    data: { id: ral_id },
                     dataType: "JSON",
                     type: "POST",
                     success: function(res) {
+                        dd(res);
                         if (res.result) {
-                            // 刷新主页数据
-                            templete_Detail.getCourseDetail();
-                            //
-                            layer.msg('课时修改成功！');
-                            // 关闭弹框
-                            $(_dialog).dialog('close');
-
+                            _this.getCourseDetail();
+                            layer.msg('删除成功！');
                         } else {
-                            layer.msg('ERROR ' + res.error);
+                            layer.msg("ERROR " + res.error);
                         }
                     }
                 });
-                return;
-            },
-            '取消': function() {
-                $(this).dialog('close');
-            }
+                layer.close(index);
+            });
         },
-        close: function() {
-            $(this).html('');
-        }
-    });
-    // 添加产品关联显示
-    $("#dialog-productral-add").dialog({
-        autoOpen: false,
-        modal: true,
-        width: '55%',
-        maxHeight: 600,
-        position: ["center", 100],
-        buttons: {
-            '添加': function() {
-                // 操作
-                var course_id = templete_Detail.detail.id,
-                    form_data = $('#section_add_form').serializeArray(),
-                    data = {},
-                    _dialog = this;
-                form_data.forEach(function(v) {
-                    data[v.name] = v.value;
-                });
-                data['course_id'] = course_id;
-                $.ajax({
-                    url: "{:U('education/courseproduct_add')}",
-                    data: data,
-                    dataType: "JSON",
-                    type: "POST",
-                    success: function(res) {
-                        if (res.result) {
-                            // 刷新主页数据
-                            templete_Detail.getCourseDetail();
-                            //
-                            layer.msg('关联成功！');
-                            // 关闭弹框
-                            $(_dialog).dialog('close');
 
-                        } else {
-                            layer.msg('ERROR ' + res.error);
-                        }
-                    }
-                });
-                return;
-            },
-            '取消': function() {
-                $(this).dialog('close');
-            }
-        },
-        close: function() {
-            $(this).html('');
-        }
-    });
-    // 添加课期（班级）显示
-    $("#dialog-period-add").dialog({
-        autoOpen: false,
-        modal: true,
-        width: '55%',
-        maxHeight: 600,
-        position: ["center", 100],
-        buttons: {
-            '添加': function() {
-                // 操作
-                var course_id = templete_Detail.detail.id,
-                    form_data = $('#section_add_form').serializeArray(),
-                    data = {},
-                    _dialog = this;
-                form_data.forEach(function(v) {
-                    data[v.name] = v.value;
-                });
-                data['course_id'] = course_id;
-                $.ajax({
-                    url: "{:U('education/period_add')}",
-                    data: data,
-                    dataType: "JSON",
-                    type: "POST",
-                    success: function(res) {
-                        if (res.result) {
-                            // 刷新主页数据
-                            templete_Detail.getCourseDetail();
-                            //
-                            layer.msg('新增课期(开办)成功！');
-                            // 关闭弹框
-                            $(_dialog).dialog('close');
 
-                        } else {
-                            layer.msg('ERROR ' + res.error);
-                        }
-                    }
-                });
-                return;
-            },
-            '取消': function() {
-                $(this).dialog('close');
-            }
-        },
-        close: function() {
-            $(this).html('');
-        }
-    });
-    // 编辑课期（班级）显示
-    $("#dialog-period-edit").dialog({
-        autoOpen: false,
-        modal: true,
-        width: '55%',
-        maxHeight: 600,
-        position: ["center", 100],
-        buttons: {
-            '修改': function() {
-                // 操作
-                var course_id = templete_Detail.detail.id,
-                    form_data = $('#section_add_form').serializeArray(),
-                    data = {},
-                    _dialog = this;
-                form_data.forEach(function(v) {
-                    data[v.name] = v.value;
-                });
-                $.ajax({
-                    url: "{:U('education/period_edit')}",
-                    data: data,
-                    dataType: "JSON",
-                    type: "POST",
-                    success: function(res) {
-                        if (res.result) {
-                            // 刷新主页数据
-                            templete_Detail.getCourseDetail();
-                            //
-                            layer.msg('修改课期(班级)成功！');
-                            // 关闭弹框
-                            $(_dialog).dialog('close');
+        gotoProductDetail: function(product_id) {
+            if (!product_id) return;
 
-                        } else {
-                            layer.msg('ERROR ' + res.error);
-                        }
-                    }
-                });
-                return;
-            },
-            '取消': function() {
-                $(this).dialog('close');
-            }
-        },
-        close: function() {
-            $(this).html('');
+            window.open('/index.php?m=product&a=view&id=' + product_id);
         }
-    });
-    // 课期操作显示
-    $("#dialog-periodmanage-add").dialog({
-        autoOpen: false,
-        modal: true,
-        width: '80%',
-        maxHeight: 800,
-        position: ["center", 100],
-        buttons: {
-            '关闭': function() {
-                templete_Detail.getCourseDetail();
-                $(this).dialog('close');
-            }
-        },
-        close: function() {
-            templete_Detail.getCourseDetail();
-            $(this).html('');
-        }
-    });
-
-    function dd(data) {
-        console.log(data)
+    },
+    mounted: function() {
+        $("[type='tab1']").click();
+        // 获取详情
+        this.getCourseDetail();
     }
-})
+});
 
+// 添加课时弹框显示
+$("#dialog-section-add").dialog({
+    autoOpen: false,
+    modal: true,
+    width: '55%',
+    maxHeight: 600,
+    position: ["center", 100],
+    buttons: {
+        '添加': function() {
+            // 操作
+            var course_id = templete_Detail.detail.id,
+                form_data = $('#section_add_form').serializeArray(),
+                data = {},
+                _dialog = this;
+            form_data.forEach(function(v) {
+                data[v.name] = v.value;
+            });
+            data['course_id'] = course_id;
+            $.ajax({
+                url: "{:U('education/section_add')}",
+                data: data,
+                dataType: "JSON",
+                type: "POST",
+                success: function(res) {
+                    if (res.result) {
+                        // 刷新主页数据
+                        templete_Detail.getCourseDetail();
+                        //
+                        layer.msg('添加成功！');
+                        // 关闭弹框
+                        $(_dialog).dialog('close');
+
+                    } else {
+                        layer.msg('ERROR ' + res.error);
+                    }
+                }
+            });
+            return;
+        },
+        '取消': function() {
+            $(this).dialog('close');
+        }
+    },
+    close: function() {
+        $(this).html('');
+    }
+});
+// 修改课时弹框显示
+$("#dialog-section-edit").dialog({
+    autoOpen: false,
+    modal: true,
+    width: '55%',
+    maxHeight: 600,
+    position: ["center", 100],
+    buttons: {
+        '修改': function() {
+            // 操作
+            var course_id = templete_Detail.detail.id,
+                form_data = $('#section_add_form').serializeArray(),
+                data = {},
+                _dialog = this;
+            form_data.forEach(function(v) {
+                data[v.name] = v.value;
+            });
+            $.ajax({
+                url: "{:U('education/section_edit')}",
+                data: data,
+                dataType: "JSON",
+                type: "POST",
+                success: function(res) {
+                    if (res.result) {
+                        // 刷新主页数据
+                        templete_Detail.getCourseDetail();
+                        //
+                        layer.msg('课时修改成功！');
+                        // 关闭弹框
+                        $(_dialog).dialog('close');
+
+                    } else {
+                        layer.msg('ERROR ' + res.error);
+                    }
+                }
+            });
+            return;
+        },
+        '取消': function() {
+            $(this).dialog('close');
+        }
+    },
+    close: function() {
+        $(this).html('');
+    }
+});
+// 添加产品关联显示
+$("#dialog-productral-add").dialog({
+    autoOpen: false,
+    modal: true,
+    width: '55%',
+    maxHeight: 600,
+    position: ["center", 100],
+    buttons: {
+        '添加': function() {
+            // 操作
+            var course_id = templete_Detail.detail.id,
+                form_data = $('#section_add_form').serializeArray(),
+                data = {},
+                _dialog = this;
+            form_data.forEach(function(v) {
+                data[v.name] = v.value;
+            });
+            data['course_id'] = course_id;
+            $.ajax({
+                url: "{:U('education/courseproduct_add')}",
+                data: data,
+                dataType: "JSON",
+                type: "POST",
+                success: function(res) {
+                    if (res.result) {
+                        // 刷新主页数据
+                        templete_Detail.getCourseDetail();
+                        //
+                        layer.msg('关联成功！');
+                        // 关闭弹框
+                        $(_dialog).dialog('close');
+
+                    } else {
+                        layer.msg('ERROR ' + res.error);
+                    }
+                }
+            });
+            return;
+        },
+        '取消': function() {
+            $(this).dialog('close');
+        }
+    },
+    close: function() {
+        $(this).html('');
+    }
+});
+// 添加课期（班级）显示
+$("#dialog-period-add").dialog({
+    autoOpen: false,
+    modal: true,
+    width: '55%',
+    maxHeight: 600,
+    position: ["center", 100],
+    buttons: {
+        '添加': function() {
+            // 操作
+            var course_id = templete_Detail.detail.id,
+                form_data = $('#section_add_form').serializeArray(),
+                data = {},
+                _dialog = this;
+            form_data.forEach(function(v) {
+                data[v.name] = v.value;
+            });
+            data['course_id'] = course_id;
+            $.ajax({
+                url: "{:U('education/period_add')}",
+                data: data,
+                dataType: "JSON",
+                type: "POST",
+                success: function(res) {
+                    if (res.result) {
+                        // 刷新主页数据
+                        templete_Detail.getCourseDetail();
+                        //
+                        layer.msg('新增课期(开办)成功！');
+                        // 关闭弹框
+                        $(_dialog).dialog('close');
+
+                    } else {
+                        layer.msg('ERROR ' + res.error);
+                    }
+                }
+            });
+            return;
+        },
+        '取消': function() {
+            $(this).dialog('close');
+        }
+    },
+    close: function() {
+        $(this).html('');
+    }
+});
+// 编辑课期（班级）显示
+$("#dialog-period-edit").dialog({
+    autoOpen: false,
+    modal: true,
+    width: '55%',
+    maxHeight: 600,
+    position: ["center", 100],
+    buttons: {
+        '修改': function() {
+            // 操作
+            var course_id = templete_Detail.detail.id,
+                form_data = $('#section_add_form').serializeArray(),
+                data = {},
+                _dialog = this;
+            form_data.forEach(function(v) {
+                data[v.name] = v.value;
+            });
+            $.ajax({
+                url: "{:U('education/period_edit')}",
+                data: data,
+                dataType: "JSON",
+                type: "POST",
+                success: function(res) {
+                    if (res.result) {
+                        // 刷新主页数据
+                        templete_Detail.getCourseDetail();
+                        //
+                        layer.msg('修改课期(班级)成功！');
+                        // 关闭弹框
+                        $(_dialog).dialog('close');
+
+                    } else {
+                        layer.msg('ERROR ' + res.error);
+                    }
+                }
+            });
+            return;
+        },
+        '取消': function() {
+            $(this).dialog('close');
+        }
+    },
+    close: function() {
+        $(this).html('');
+    }
+});
+// 课期操作显示
+$("#dialog-periodmanage-add").dialog({
+    autoOpen: false,
+    modal: true,
+    width: '80%',
+    maxHeight: 800,
+    position: ["center", 100],
+    buttons: {
+        '关闭': function() {
+            templete_Detail.getCourseDetail();
+            $(this).dialog('close');
+        }
+    },
+    close: function() {
+        templete_Detail.getCourseDetail();
+        $(this).html('');
+    }
+});
+
+function dd(data) {
+    console.log(data)
+}
+
+
+
+
+function loadFile(that,file,type){
+    var pobj            =   $(that),
+        data            =   new FormData(),
+        schedule_id     =   pobj.attr('data-id');
+    if( !schedule_id ){
+        layer.msg('ERROR 参数缺失');return ;
+    }
+    if( !file ){
+        layer.msg('ERROR 请选择文件');return ;
+    }
+    switch (type){
+        case 1:
+            // 视频
+            data.append('video',file);
+            break;
+        case 2:
+            // 作业
+            data.append('homework',file);
+            break;
+        case 3:
+            // 课程视频
+            data.append('old_video',file);
+            break;
+    }
+    data.append('id',schedule_id);
+    $.ajax({
+        url:"{:U('education/schedule_upload')}",
+        data:data,
+        dataType:"JSON",
+        type:"POST",
+        processData:false,
+        contentType:false,
+        async:false,
+        success:function (res) {
+            if( res.result ){
+                // 刷新主页数据
+                templete_Detail.getCourseDetail()
+                //window.location.reload(true);
+                //
+                layer.msg( '上传成功！' );
+                // 关闭弹框
+
+            }else{
+                layer.msg('ERROR '+res.error);
+            }
+        }
+    });
+}
 function showSectionEdit(btn) {
     var id = $(btn).parent().parent().attr('data-id');
     if (!id) {
@@ -735,4 +794,7 @@ function showPeriodManage(period_id) {
     window.location.href='{:U("educationview/period_detail")}' + '&id=' + period_id;
     //$('#dialog-periodmanage-add').load('{:U("educationview/period_detail")}' + '&id=' + period_id);
 }
+
+
+
 </script>

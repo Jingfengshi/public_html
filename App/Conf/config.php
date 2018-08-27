@@ -63,5 +63,12 @@
             'key'=>'PGxzTqaSNL0WEWTL',
         ),
 
+        'config_qiniu' => array(
+            'accessKey' => 'L6xYigZmF51yqg-XjNc6cojX0iE14deNjD6RgPlP', //这里填七牛AK
+            'secretKey' => 'IiuClLjvsPpk7iYcgAaUQCetVjFiXeLg6KJu0t6l', //这里填七牛SK
+            'domain' => 'pe3vt36n5.bkt.clouddn.com',//这里是域名
+            'bucket' => 'xiaoyingvideo'//这里是七牛中的“空间”
+        ),
+
 	);
 ?>

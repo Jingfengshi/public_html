@@ -754,9 +754,15 @@ class EducationAction extends Action
             $result['result'] || $this->_throw($this->_message(ACTION_NAME, $result['field']));
             $homeworkKey = 'homework';
             $videoKey = 'video';
+            $oldVideoKey = 'old_video';
             if ($_FILES[$homeworkKey] && $_FILES[$homeworkKey]['error'] == 0) {
                 $this->schedule_upload_homework($homeworkKey, $params['id']);
 
+                $this->ajaxReturn(['result' => true]);
+            }
+
+            if ($_FILES[$oldVideoKey] && $_FILES[$oldVideoKey]['error'] == 0) {
+                $this->schedule_upload_old_video($oldVideoKey, $params['id']);
                 $this->ajaxReturn(['result' => true]);
             }
             if ($_FILES[$videoKey] && $_FILES[$videoKey]['error'] == 0) {
@@ -857,6 +863,41 @@ class EducationAction extends Action
         }
         $this->_throw($info);
     }
+
+    protected function schedule_upload_old_video($videoKey, $schedule_id)
+    {
+        //测试七牛
+        require APP_PATH.'Lib/ORG/qiniu/autoload.php';
+        $accessKey = C('config_qiniu.accessKey');
+        $secretKey = C('config_qiniu.secretKey');
+        $auth = new \Qiniu\Auth($accessKey, $secretKey);
+        $bucket = C('config_qiniu.bucket');
+
+        // 生成上传Token
+        $token = $auth->uploadToken($bucket);
+        // 构建 UploadManager 对象
+        $uploadMgr = new \Qiniu\Storage\UploadManager();
+
+        // 要上传文件的本地路径
+        $filePath = APP_PATH.'../Uploads/Schedule_old_video/2018-08-27/5b838a9b932187647.png';
+        // 上传到七牛后保存的文件名
+        $key = 'my-php-logo.png';
+        // 初始化 UploadManager 对象并进行文件的上传。
+        // 调用 UploadManager 的 putFile 方法进行文件的上传。
+        list($ret, $err) = $uploadMgr->putFile($token, $key, $filePath);
+
+//        if (is_array($info = $this->uploadOne($videoKey, 'Schedule_old_video'))) {
+//            $path = $info[0]['savepath'] . $info[0]['savename'];
+
+        $scheduleModel = new SectionModelEdu();
+
+        $scheduleModel->where(array('id'=>$schedule_id))->save(['video_path'=>C('config_qiniu.domain').'/'.$key]);
+            return ;
+//        }
+        $this->_throw($info);
+    }
+
+
 
     public function notYetSchedule($sections, $yet)
     {
