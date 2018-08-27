@@ -29,6 +29,9 @@
     .modal{
         top: 120px;
     }
+    .ui-dialog-content{
+        overflow: hidden !important;
+    }
 </style>
  <script src="__PUBLIC__/style/js/plugins/nice-scroll/jquery.nicescroll.min.js" type="text/javascript"></script>
 
@@ -274,7 +277,7 @@
     $("#dialog-periodmanage-add").dialog({
         autoOpen: false,
         modal: true,
-        width: '55%',
+        width: '60%',
         maxHeight: 600,
         position: ["center", 100],
         buttons: {
