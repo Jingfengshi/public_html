@@ -228,6 +228,7 @@ class EducationviewAction extends Action
             ->order('id desc')
             ->limit(20)
             ->select() ?: [];
+
         $this->assign('courses',$courses);
         $this->display();
     }
