@@ -97,8 +97,9 @@ class StudentModelEdu extends EducationModelEdu
     /**
      * @ 购买课程，还未分班的学员
      */
-    public function notYetToPeriodStudentList ($course_id)
+    public function notYetToPeriodStudentList ($course_id,$period_id)
     {
+
         $courseProductModel     =   new CourseProductModelEdu();
         // 获取购买该课程的所有学员
         //      课程所属产品
@@ -109,7 +110,7 @@ class StudentModelEdu extends EducationModelEdu
         $productIds             =   array_map( function($p){
             return $p['product_id'];
         }, $products );
-        //      合法客户信息
+        //合法客户信息
         $legelCustomer         =   M('Customer')->field('mx_cst.name,mx_cst.customer_id,mx_rec_o.receivingorder_id')
             ->join("mx_cst LEFT JOIN mx_receivables mx_rec ON mx_cst.customer_id = mx_rec.customer_id") //应收款
             ->join("LEFT JOIN mx_receivingorder mx_rec_o ON mx_rec_o.receivables_id = mx_rec.receivables_id") // 客户收款
@@ -118,16 +119,51 @@ class StudentModelEdu extends EducationModelEdu
             ->join("LEFT JOIN mx_r_business_product mx_r_bp ON mx_r_bp.business_id = mx_r_bc.business_id") // 商机下的产品
             ->where(['mx_r_bp.product_id'=>['in',implode(',',$productIds)], 'mx_rec_o.receivingorder_id'=>['gt',0]])
             ->select();
+        \Log::write( M('Customer')->getLastSql());
         if( !$legelCustomer )   return [];
         $legelCustomerIds       =   array_map( function ($c){
             return $c['customer_id'];
         }, $legelCustomer );
-        $legelCustomerIds       =   implode( ',', $legelCustomerIds );
-        // 获取学生<=>客户 未分班的学员
-        return $this->field('s.id,s.realname')
-            ->join("s LEFT JOIN {$this->dbName}.period_student p_s ON s.id = p_s.student_id")
-            ->where("s.customer_id IN ({$legelCustomerIds}) AND p_s.id is null")
-            ->select() ?: [];
+        $legelCustomerIds=array_unique($legelCustomerIds);
+        \Log::write( '原本的的客户id'.json_encode($legelCustomerIds));
+        //将合法的客户中，已经选过该课期的学生给过滤掉
+        $periodStudents=new PeriodStudentModelEdu();
+        $students=$periodStudents->field('student_id')->where('period_id ='.$period_id)->select();
+        \Log::write( '查询学生的sql'.$periodStudents->getLastSql());
+        $students_arr=[];
+        if($students){
+            foreach ($students as $k=>$v){
+                $students_arr[]=$v['student_id'];
+            }
+            \Log::write( '学生id'.json_encode($students));
+            $student_model=new StudentModelEdu();
+            $customer_ids=$student_model->field('customer_id')
+                ->where(array('id'=>array('in',$students_arr)))
+                ->select();
+            \Log::write( '学生关联customer的id'.json_encode($customer_ids));
+            if($customer_ids){
+                $customer_ids_arr=[];
+                foreach ($customer_ids as $k=>$v){
+                    $customer_ids_arr[]=$v['customer_id'];
+                }
+                if(!empty($students_arr)){
+                    foreach ($legelCustomerIds as $key=> $student){
+                        if(in_array($student,$customer_ids_arr)){
+                            unset($legelCustomerIds[$key]);
+                        }
+                    }
+                }
+            }
+        }
+
+        $data= $this->alias('s')->field(' DISTINCT  s.id,s.realname');
+           // ->join("s  left JOIN {$this->dbName}.period_student p_s ON s.id = p_s.student_id");
+       $map['s.customer_id']=array('in',$legelCustomerIds);
+
+        $data=$data->where($map)->select() ?: [];
+        \Log::write($this->getLastSql());
+        return $data;
+
     }
 
     protected function _before_insert(&$data, $options)

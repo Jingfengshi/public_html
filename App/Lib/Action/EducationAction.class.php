@@ -540,7 +540,7 @@ class EducationAction extends Action
                     // 班级下学员信息
                     $subStudent = $periodModel->student_list(['p_s.period_id' => ['eq', $period_id]]);
                     // 未分班的学员
-                    $notYetStudent = $studentModel->notYetToPeriodStudentList($course_id);
+                    $notYetStudent = $studentModel->notYetToPeriodStudentList($course_id,$period_id);
                     // 讲师列表
                     $teacher = $teacherModel->teacher_lists('')['data'];
                     //数量
