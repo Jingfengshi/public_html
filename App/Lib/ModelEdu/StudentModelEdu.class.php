@@ -119,28 +119,23 @@ class StudentModelEdu extends EducationModelEdu
             ->join("LEFT JOIN mx_r_business_product mx_r_bp ON mx_r_bp.business_id = mx_r_bc.business_id") // 商机下的产品
             ->where(['mx_r_bp.product_id'=>['in',implode(',',$productIds)], 'mx_rec_o.receivingorder_id'=>['gt',0]])
             ->select();
-        \Log::write( M('Customer')->getLastSql());
         if( !$legelCustomer )   return [];
         $legelCustomerIds       =   array_map( function ($c){
             return $c['customer_id'];
         }, $legelCustomer );
         $legelCustomerIds=array_unique($legelCustomerIds);
-        \Log::write( '原本的的客户id'.json_encode($legelCustomerIds));
         //将合法的客户中，已经选过该课期的学生给过滤掉
         $periodStudents=new PeriodStudentModelEdu();
         $students=$periodStudents->field('student_id')->where('period_id ='.$period_id)->select();
-        \Log::write( '查询学生的sql'.$periodStudents->getLastSql());
         $students_arr=[];
         if($students){
             foreach ($students as $k=>$v){
                 $students_arr[]=$v['student_id'];
             }
-            \Log::write( '学生id'.json_encode($students));
             $student_model=new StudentModelEdu();
             $customer_ids=$student_model->field('customer_id')
                 ->where(array('id'=>array('in',$students_arr)))
                 ->select();
-            \Log::write( '学生关联customer的id'.json_encode($customer_ids));
             if($customer_ids){
                 $customer_ids_arr=[];
                 foreach ($customer_ids as $k=>$v){
@@ -157,11 +152,9 @@ class StudentModelEdu extends EducationModelEdu
         }
 
         $data= $this->alias('s')->field(' DISTINCT  s.id,s.realname');
-           // ->join("s  left JOIN {$this->dbName}.period_student p_s ON s.id = p_s.student_id");
-       $map['s.customer_id']=array('in',$legelCustomerIds);
-
+        $map['s.customer_id']=array('in',$legelCustomerIds);
         $data=$data->where($map)->select() ?: [];
-        \Log::write($this->getLastSql());
+
         return $data;
 
     }
